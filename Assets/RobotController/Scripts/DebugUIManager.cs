@@ -1,18 +1,23 @@
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
-public class DebugUIManager : MonoBehaviour
+namespace RobotController
 {
-    // Start is called before the first frame update
-    void Start()
+    public class DebugUIManager : MonoBehaviour
     {
-        
-    }
+        [SerializeField] private NetworkManager networkManager;
+        [SerializeField] private TMP_Text localEpText;
+        [SerializeField] private TMP_Text logText;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        private void Start()
+        {
+            localEpText.text = $"Listener EP: {networkManager.LocalEndPoint}";
+        }
+
+        private void Update()
+        {
+            if (networkManager.TargetEndPoint != null)
+                logText.text = $"\nTarget EP: {networkManager.TargetEndPoint}";
+        }
     }
 }
