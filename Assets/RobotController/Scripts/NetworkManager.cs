@@ -1,77 +1,93 @@
-using System.Collections.Generic;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace RobotController
 {
     public class NetworkManager : MonoBehaviour
     {
-        public int localPort = 11000;
+        public int receivePort = 10001;
+        public int sendPort = 9999;
         public int remotePort = 10000;
         public string pingMessage = "ping-robot";
         public string pongMessage = "pong-robot";
 
-        private UdpClient _listenerClient;
-        private UdpClient _senderClient;
+        private UDP _udp;
 
-        public IPEndPoint LocalEndPoint { get; private set; }
-        public string TargetEndPoint { get; private set; }
+        public IPEndPoint LocalEndPoint;
+        public IPEndPoint TargetEndPoint;
 
         private void Awake()
         {
-            GetCurrentIp();
-            GetTargetIP();
+            GetCurrentEndPoint();
         }
 
-        private void GetCurrentIp()
+        private void Start()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
+            _udp = new UDP(receivePort);
 
-            foreach (var ip in host.AddressList)
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+            var token = this.GetCancellationTokenOnDestroy();
+            WaitConnect(token).Forget();
+            WaitReceive(token).Forget();
+        }
+
+        private void OnApplicationQuit()
+        {
+            _udp.Dispose();
+        }
+
+        private async UniTask WaitConnect(CancellationToken token)
+        {
+            Debug.Log("Connecting...");
+            while (!token.IsCancellationRequested)
+            {
+                _udp.Broadcast(Encoding.ASCII.GetBytes(pingMessage), token);
+                var receiveResult = await _udp.Receive(token);
+                var endPoint = receiveResult.RemoteEndPoint;
+                var pong = Encoding.ASCII.GetString(receiveResult.Buffer);
+                if (pong == pongMessage)
                 {
-                    LocalEndPoint = new IPEndPoint(ip, localPort);
-                    Debug.Log($"IP Address: {ip}");
+                    TargetEndPoint = endPoint;
+                    Debug.Log($"Connected to {endPoint.Address}:{endPoint.Port}");
                     return;
                 }
 
-            Debug.Log("No network adapters with an IPv4 address in the system!");
-        }
+                Debug.Log($"Received {pong}");
+                Debug.Log("Trying to connect...");
 
-        // get all devices connected to the same wireless local network by broadcasting to the subnet
-        private void GetTargetIP()
-        {
-            _senderClient = new UdpClient(); // port in useless for sender
-            _senderClient.EnableBroadcast = true;
-            var request = Encoding.ASCII.GetBytes(pingMessage);
-            var ipEndPoint = new IPEndPoint(IPAddress.Broadcast, remotePort);
-            _senderClient.Send(request, request.Length, ipEndPoint);
 
-            _listenerClient = new UdpClient(new IPEndPoint(IPAddress.Any, localPort));
-            var response = _listenerClient.Receive(ref ipEndPoint); // blocking call
-            if (Encoding.ASCII.GetString(response) == pongMessage)
-            {
-                Debug.Log($"IP Address: {ipEndPoint.Address}");
-                TargetEndPoint = ipEndPoint.Address.ToString();
-            }
-            else
-            {
-                Debug.Log("Target device not found!");
+                await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: token);
             }
         }
 
-        private void SendData(byte[] data)
+        private void Send(byte[] data)
         {
-            _senderClient.Send(data, data.Length, TargetEndPoint, remotePort);
+            _udp.Send(data, TargetEndPoint).Forget();
         }
 
-        private IEnumerator<byte[]> ReceiveData()
+        private async UniTaskVoid WaitReceive(CancellationToken token)
         {
-            var ipEndPoint = new IPEndPoint(IPAddress.Any, localPort);
-            var data = _listenerClient.Receive(ref ipEndPoint);
-            yield return data;
+            while (!token.IsCancellationRequested)
+            {
+                var data = await _udp.Receive(token);
+                Debug.Log(data);
+                //await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: token);
+            }
+        }
+
+        private void GetCurrentEndPoint()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily != AddressFamily.InterNetwork) continue;
+                LocalEndPoint = new IPEndPoint(ip, receivePort);
+                break;
+            }
         }
     }
 }
