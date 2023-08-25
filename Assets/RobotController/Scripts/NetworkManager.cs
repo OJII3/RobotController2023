@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace RobotController
 {
@@ -12,14 +13,17 @@ namespace RobotController
     {
         public int receivePort = 10001;
         public int sendPort = 9999;
-        public int remotePort = 10000;
+        [FormerlySerializedAs("targetPort")] public int remotePort = 10000;
         public string pingMessage = "ping-robot";
         public string pongMessage = "pong-robot";
+        public bool isConnected;
+        private Socket _socket;
 
-        private UDP _udp;
+        private UdpClient _udpClient;
+        private UDPLib _udpLib;
 
         public IPEndPoint LocalEndPoint;
-        public IPEndPoint TargetEndPoint;
+        public IPEndPoint RemoteEndPoint;
 
         private void Awake()
         {
@@ -28,56 +32,61 @@ namespace RobotController
 
         private void Start()
         {
-            _udp = new UDP(receivePort);
+            _udpClient = new UdpClient(receivePort);
 
             var token = this.GetCancellationTokenOnDestroy();
-            WaitConnect(token).Forget();
-            WaitReceive(token).Forget();
+            Connect(token).Forget();
         }
 
         private void OnApplicationQuit()
         {
-            _udp.Dispose();
+            _udpClient.Dispose();
         }
 
-        private async UniTask WaitConnect(CancellationToken token)
+        private async UniTaskVoid Connect(CancellationToken token)
         {
             Debug.Log("Connecting...");
-            while (!token.IsCancellationRequested)
+            var pingBytes = Encoding.ASCII.GetBytes(pingMessage);
+            var broadCastEndPoint = new IPEndPoint(IPAddress.Broadcast, remotePort);
+            UdpReceiveResult receiveResult = default;
+
+            while (receiveResult.RemoteEndPoint == null)
             {
-                _udp.Broadcast(Encoding.ASCII.GetBytes(pingMessage), token);
-                var receiveResult = await _udp.Receive(token);
-                var endPoint = receiveResult.RemoteEndPoint;
-                var pong = Encoding.ASCII.GetString(receiveResult.Buffer);
-                if (pong == pongMessage)
-                {
-                    TargetEndPoint = endPoint;
-                    Debug.Log($"Connected to {endPoint.Address}:{endPoint.Port}");
-                    return;
-                }
-
-                Debug.Log($"Received {pong}");
-                Debug.Log("Trying to connect...");
-
-
-                await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: token);
+                await _udpClient.SendAsync(pingBytes, pingBytes.Length, broadCastEndPoint);
+                receiveResult = await _udpClient.ReceiveAsync();
+                await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: token);
+                Debug.Log("Failed to Connect. Retrying...");
             }
+
+            Debug.Log("Received Response");
+
+            var endPoint = receiveResult.RemoteEndPoint;
+            var pong = Encoding.ASCII.GetString(receiveResult.Buffer);
+            if (pong == pongMessage)
+            {
+                RemoteEndPoint = endPoint;
+                Debug.Log($"Connected to {endPoint.Address}:{endPoint.Port}");
+            }
+
+            Debug.Log($"Received {pong}");
         }
 
         private void Send(byte[] data)
         {
-            _udp.Send(data, TargetEndPoint).Forget();
+            _udpLib.Send(data, RemoteEndPoint).Forget();
         }
 
-        private async UniTaskVoid WaitReceive(CancellationToken token)
+        private async UniTask<UdpReceiveResult> Receive(CancellationToken token)
         {
             while (!token.IsCancellationRequested)
             {
-                var data = await _udp.Receive(token);
-                Debug.Log(data);
-                //await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: token);
+                var data = await _udpClient.ReceiveAsync();
+                return data;
             }
+
+            return default;
         }
+
 
         private void GetCurrentEndPoint()
         {
@@ -88,6 +97,11 @@ namespace RobotController
                 LocalEndPoint = new IPEndPoint(ip, receivePort);
                 break;
             }
+        }
+
+        private async void BroadCast(byte[] buffer, CancellationToken token = default)
+        {
+            await _udpClient.SendAsync(buffer, buffer.Length, new IPEndPoint(IPAddress.Broadcast, remotePort));
         }
     }
 }

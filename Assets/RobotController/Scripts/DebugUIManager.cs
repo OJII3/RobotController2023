@@ -16,8 +16,8 @@ namespace RobotController
 
         private void Update()
         {
-            if (networkManager.TargetEndPoint != null)
-                logText.text = $"\nTarget EP: {networkManager.TargetEndPoint}";
+            if (networkManager.RemoteEndPoint != null)
+                logText.text = $"\nTarget EP: {networkManager.RemoteEndPoint}";
         }
     }
 }
