@@ -88,6 +88,8 @@ GameObject:
   - component: {fileID: 2272379133078216661}
   - component: {fileID: 3473993245703527200}
   - component: {fileID: 3780048146458488857}
+  - component: {fileID: 4009641538664543309}
+  - component: {fileID: 1737633994477046041}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -191,10 +193,134 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fef51adb3c01279d28ec0f518bde2ef4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localPort: 11000
+  receivePort: 10001
   remotePort: 10000
   pingMessage: ping-robot
-  pongMessage: pong-robot
+  pingResultMessage: pong-robot
+  connectionState: 1
+--- !u!114 &4009641538664543309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5930073459588153964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: 7b8ed332a5c5f90efa608e891c84cffc, type: 3}
+  m_NotificationBehavior: 2
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents:
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 2b5a21d1-ffc2-4b44-a4b7-a36b5035e52e
+    m_ActionName: Controller/LeftStickUp
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 4bfee71c-fe76-411b-a944-75dc24d929bb
+    m_ActionName: Controller/LeftStickDown
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 14655441-2364-4c14-a54d-acbdfa0732d5
+    m_ActionName: Controller/RightStickX
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 3782b008-384f-4c81-ba6a-ed4c86c3c0f3
+    m_ActionName: Controller/RightStickY
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 79273c85-25fc-4e74-8d2f-6d79b6315d80
+    m_ActionName: Controller/LeftStickPress
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 5b464fca-d7b0-4ea0-bab4-7f9a86a4e441
+    m_ActionName: Controller/RightStickPress
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 79f67eb6-da45-49e5-93bf-a78a8de9bb4a
+    m_ActionName: Controller/Select
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 48d4550c-35f0-4859-89f8-44149556f69c
+    m_ActionName: Controller/Start
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 42f26d8a-ffae-4765-be16-2fcc013a76ab
+    m_ActionName: Controller/R2
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 497f2131-ab57-4edf-91d7-f9f47089ee53
+    m_ActionName: Controller/L2
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 78b0847d-967a-4481-9b1c-ffe1ab154188
+    m_ActionName: Controller/R1
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: fb6cbd9d-f3c9-4a48-b006-27690d7e2590
+    m_ActionName: Controller/L1
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 0350caf5-e655-49e5-92c1-5aeabf5b006f
+    m_ActionName: Controller/ButtonEast
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 5bcb4863-42e1-4004-b524-136d3173a746
+    m_ActionName: Controller/ButtonSouth
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 16c262b1-d384-4fd5-8226-85b5975eb9b2
+    m_ActionName: Controller/ButtonWest
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 807468fd-5b98-4b3d-8296-238546df14c8
+    m_ActionName: Controller/ButtonNorth
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 53f5cbdf-d1ba-4e30-9a09-f77650f465a2
+    m_ActionName: Controller/DPadLeft
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 5c223a5b-0933-4d30-b5f4-1679b7f11138
+    m_ActionName: Controller/DPadDown
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 10cbdd1f-1fd3-4946-a823-9b0b54ab07f5
+    m_ActionName: Controller/DPadRight
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 64dcbfbc-2679-499e-bceb-48103a3f41a0
+    m_ActionName: Controller/DPadUp
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Controller
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
+--- !u!114 &1737633994477046041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5930073459588153964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce3d8d4f654407fafb49e6364b639d5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  networkManager: {fileID: 3780048146458488857}
 --- !u!1001 &9007811120225234609
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -229,7 +355,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3304857024737450187, guid: 56dd4cbcf7192f823b87f98c6e92ea7b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.000049731265
+      value: 0.0008820405
       objectReference: {fileID: 0}
     - target: {fileID: 3685695766791697210, guid: 56dd4cbcf7192f823b87f98c6e92ea7b, type: 3}
       propertyPath: m_Pivot.x
@@ -317,7 +443,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6548094542619706732, guid: 56dd4cbcf7192f823b87f98c6e92ea7b, type: 3}
       propertyPath: m_Size
-      value: 0.99979603
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6665896304215645264, guid: 56dd4cbcf7192f823b87f98c6e92ea7b, type: 3}
       propertyPath: m_AnchorMax.x
