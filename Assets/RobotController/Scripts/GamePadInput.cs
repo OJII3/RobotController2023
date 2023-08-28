@@ -30,12 +30,16 @@ namespace RobotController
         private readonly string _actionSelect = "Select";
         private readonly string _actionStart = "Start";
 
+        private readonly byte _footerChar = Encoding.ASCII.GetBytes("E")[0];
+
+        private readonly byte _headerChar = Encoding.ASCII.GetBytes("S")[0];
+
+        // { header, header, buttons, buttons, buttons, buttons, left stick x,
+        // left stick y, right stick x, right stick y, footer, footer }
         private readonly byte[]
             _messageData =
-                new byte[8]; // buttons, buttons, buttons, buttons, left stick x, left stick y, right stick x, right stick y
+                new byte[12];
 
-        private readonly byte[] _messageFooter = Encoding.ASCII.GetBytes("EE");
-        private readonly byte[] _messageHeader = Encoding.ASCII.GetBytes("SS");
         private PlayerInput _playerInput;
 
         private void Awake()
@@ -45,55 +49,58 @@ namespace RobotController
 
         private void Update()
         {
-            for (var i = 0; i < _messageData.Length; i++) _messageData[i] = 0;
+            _messageData[0] = _headerChar;
+            _messageData[1] = _headerChar;
 
-            _messageData[0] +=
+            _messageData[2] = 0;
+            _messageData[2] +=
                 (byte)(_playerInput.actions[_actionRightStickPress].IsInProgress() ? 0b0000_0001 : 0b0000_0000);
-            _messageData[0] +=
+            _messageData[2] +=
                 (byte)(_playerInput.actions[_actionLeftStickPress].IsInProgress() ? 0b0000_0010 : 0b0000_0000);
-            _messageData[0] +=
+            _messageData[2] +=
                 (byte)(_playerInput.actions[_actionSelect].IsInProgress() ? 0b0000_0100 : 0b0000_0000);
-            _messageData[0] +=
+            _messageData[2] +=
                 (byte)(_playerInput.actions[_actionStart].IsInProgress() ? 0b0000_1000 : 0b0000_0000);
 
-            _messageData[1] +=
+            _messageData[3] = 0;
+            _messageData[3] +=
                 (byte)(_playerInput.actions[_actionR2].IsInProgress() ? 0b0000_0001 : 0b0000_0000);
-            _messageData[1] +=
+            _messageData[3] +=
                 (byte)(_playerInput.actions[_actionL2].IsInProgress() ? 0b0000_0010 : 0b0000_0000);
-            _messageData[1] +=
+            _messageData[3] +=
                 (byte)(_playerInput.actions[_actionR1].IsInProgress() ? 0b0000_0100 : 0b0000_0000);
-            _messageData[1] +=
+            _messageData[3] +=
                 (byte)(_playerInput.actions[_actionL1].IsInProgress() ? 0b0000_1000 : 0b0000_0000);
 
-            _messageData[2] +=
+            _messageData[4] = 0;
+            _messageData[4] +=
                 (byte)(_playerInput.actions[_actionButtonWest].IsInProgress() ? 0b0000_0001 : 0b0000_0000);
-            _messageData[2] +=
+            _messageData[4] +=
                 (byte)(_playerInput.actions[_actionButtonSouth].IsInProgress() ? 0b0000_0010 : 0b0000_0000);
-            _messageData[2] +=
+            _messageData[4] +=
                 (byte)(_playerInput.actions[_actionButtonEast].IsInProgress() ? 0b0000_0100 : 0b0000_0000);
-            _messageData[2] +=
+            _messageData[4] +=
                 (byte)(_playerInput.actions[_actionButtonNorth].IsInProgress() ? 0b0000_1000 : 0b0000_0000);
 
-            _messageData[3] +=
+            _messageData[5] = 0;
+            _messageData[5] +=
                 (byte)(_playerInput.actions[_actionDPadLeft].IsInProgress() ? 0b0000_0001 : 0b0000_0000);
-            _messageData[3] +=
+            _messageData[5] +=
                 (byte)(_playerInput.actions[_actionDPadDown].IsInProgress() ? 0b0000_0010 : 0b0000_0000);
-            _messageData[3] +=
+            _messageData[5] +=
                 (byte)(_playerInput.actions[_actionDPadRight].IsInProgress() ? 0b0000_0100 : 0b0000_0000);
-            _messageData[3] +=
+            _messageData[5] +=
                 (byte)(_playerInput.actions[_actionDPadUp].IsInProgress() ? 0b0000_1000 : 0b0000_0000);
 
-            _messageData[4] = (byte)(_playerInput.actions[_actionLeftStickX].ReadValue<float>() * 50);
-            _messageData[5] = (byte)(_playerInput.actions[_actionLeftStickY].ReadValue<float>() * 50);
-            _messageData[6] = (byte)(_playerInput.actions[_actionRightStickX].ReadValue<float>() * 50);
-            _messageData[7] = (byte)(_playerInput.actions[_actionRightStickY].ReadValue<float>() * 50);
+            _messageData[6] = (byte)(_playerInput.actions[_actionLeftStickX].ReadValue<float>() * 50);
+            _messageData[7] = (byte)(_playerInput.actions[_actionLeftStickY].ReadValue<float>() * 50);
+            _messageData[8] = (byte)(_playerInput.actions[_actionRightStickX].ReadValue<float>() * 50);
+            _messageData[9] = (byte)(_playerInput.actions[_actionRightStickY].ReadValue<float>() * 50);
 
-            var message = new byte[_messageHeader.Length + _messageData.Length + _messageFooter.Length];
-            _messageHeader.CopyTo(message, 0);
-            _messageData.CopyTo(message, _messageHeader.Length);
-            _messageFooter.CopyTo(message, _messageHeader.Length + _messageData.Length);
+            _messageData[10] = _footerChar;
+            _messageData[11] = _footerChar;
 
-            networkManager.StartSend(message);
+            networkManager.SendMessageData = _messageData;
         }
     }
 }
