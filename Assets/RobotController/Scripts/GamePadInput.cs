@@ -100,7 +100,7 @@ namespace RobotController
             _messageData[10] = _footerChar;
             _messageData[11] = _footerChar;
 
-            networkManager.SendMessageData = _messageData;
+            networkManager.SendBuffer = _messageData;
         }
     }
 }
