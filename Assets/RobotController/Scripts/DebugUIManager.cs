@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using TMPro;
@@ -13,7 +14,10 @@ namespace RobotController
         [SerializeField] private TMP_Text logText;
         [SerializeField] private TMP_Text remoteEndPointText;
         [SerializeField] private Image connectionStateImage;
-        [SerializeField] private Button StopButton;
+        [SerializeField] private Button stopButton;
+        [SerializeField] private Toggle logModeToggle;
+        private readonly List<byte[]> _messagesQueue = new();
+        private bool _isLogModeString = true;
 
         private void Awake()
         {
@@ -21,7 +25,8 @@ namespace RobotController
             networkManager.OnConnected += ep => remoteEndPointText.text = $"R: {ep}";
             networkManager.OnDisconnected += () => remoteEndPointText.text = "R: NULL";
             networkManager.OnReceived += LogReceivedMessage;
-            StopButton.onClick.AddListener(OnRestart);
+            stopButton.onClick.AddListener(OnRestart);
+            logModeToggle.onValueChanged.AddListener(b => _isLogModeString = b);
         }
 
         private void Start()
@@ -38,12 +43,18 @@ namespace RobotController
                 ConnectionState.Connecting => Color.yellow,
                 _ => Color.white
             };
+            _messagesQueue?.ForEach(bytes =>
+            {
+                var text = _isLogModeString ? Encoding.ASCII.GetString(bytes) : string.Join(",", bytes);
+                logText.text =
+                    $"{text}\n{logText.text}";
+            });
+            _messagesQueue?.Clear();
         }
 
         private void LogReceivedMessage(UdpReceiveResult result)
         {
-            var message = Encoding.ASCII.GetString(result.Buffer);
-            logText.text += $"{message}\n";
+            _messagesQueue?.Add(result.Buffer);
         }
 
         private void OnRestart()
