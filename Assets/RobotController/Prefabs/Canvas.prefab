@@ -196,7 +196,8 @@ MonoBehaviour:
   localReceivePort: 10001
   remoteReceivePort: 10000
   pingMessage: ping-robot
-  connectionState: 1
+  pingMessageBytes: 00535370696e672d726f626f744545
+  connection: 1
 --- !u!114 &4009641538664543309
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -354,7 +355,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3304857024737450187, guid: 56dd4cbcf7192f823b87f98c6e92ea7b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.00027013957
+      value: 0.00090678904
       objectReference: {fileID: 0}
     - target: {fileID: 3685695766791697210, guid: 56dd4cbcf7192f823b87f98c6e92ea7b, type: 3}
       propertyPath: m_Pivot.x
