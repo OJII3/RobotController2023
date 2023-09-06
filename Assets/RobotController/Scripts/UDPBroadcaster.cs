@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -10,6 +11,7 @@ namespace RobotController
     {
         private readonly UdpClient _udpClient;
         private bool _isRunning;
+        private readonly List<byte[]> _sendBuffers = new();
 
         public UDPBroadcaster()
         {
@@ -17,7 +19,10 @@ namespace RobotController
             _udpClient.EnableBroadcast = true;
         }
 
-        public byte[] SendBuffer { private get; set; }
+        public void updateSendBuffer(byte[] buffer)
+        {
+            _sendBuffers.Add(buffer);
+        }
 
         ~UDPBroadcaster()
         {
@@ -32,7 +37,9 @@ namespace RobotController
             var remoteEndPoint = new IPEndPoint(IPAddress.Broadcast, remoteListenPort);
             while (!token.IsCancellationRequested && _isRunning)
             {
-                await _udpClient.SendAsync(SendBuffer, SendBuffer.Length, remoteEndPoint);
+                foreach (var sendBuffer in _sendBuffers)
+                    await _udpClient.SendAsync(sendBuffer, sendBuffer.Length, remoteEndPoint);
+                _sendBuffers.Clear();
                 await UniTask.Delay(interval);
             }
         }

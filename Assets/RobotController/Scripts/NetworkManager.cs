@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -13,12 +14,12 @@ namespace RobotController
         public int remoteReceivePort = 10000;
         public string pingMessage = "0SSping-robotEE";
 
-        public byte[] pingMessageBytes = { 0, 83, 83, 112, 105, 110, 103, 45, 114, 111, 98, 111, 116, 69, 69 };
+        public byte[] pingMessageBytes = { 83, 83, 1, 112, 105, 110, 103, 45, 114, 111, 98, 111, 116, 69, 69 };
 
         public Connection connection = Connection.Disconnected;
-        private readonly TimeSpan _broadcastInterval = TimeSpan.FromMilliseconds(10);
-        private readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(2);
-        private DateTime _lastReceivedTime = DateTime.Now;
+        private readonly TimeSpan _broadcastInterval = TimeSpan.FromMilliseconds(5);
+        private readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(1);
+        private AsyncLocal<DateTime> _lastReceivedTime;
         private IPEndPoint _remoteEndPoint;
         private UDPBroadcaster _udpBroadcaster;
         private UDPListener _udpListener;
@@ -34,9 +35,9 @@ namespace RobotController
             _udpBroadcaster = new UDPBroadcaster();
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
-            if (connection == Connection.Connected && DateTime.Now - _lastReceivedTime > _connectionTimeout)
+            if (connection == Connection.Connected && DateTime.Now - _lastReceivedTime.Value > _connectionTimeout)
             {
                 connection = Connection.Disconnected;
                 OnConnectionChanged?.Invoke(connection, _remoteEndPoint);
@@ -64,16 +65,16 @@ namespace RobotController
 
         public void UpdateSendBuffer(byte[] buffer)
         {
-            _udpBroadcaster.SendBuffer = buffer;
+            _udpBroadcaster.updateSendBuffer(buffer);
         }
 
         private void OnReceivedCallback(UdpReceiveResult result)
         {
-            if (result.Buffer.Length > 4 && result.Buffer[1] == 'S' && result.Buffer[2] == 'S' &&
+            if (result.Buffer.Length > 4 && result.Buffer[0] == 'S' && result.Buffer[1] == 'S' &&
                 result.Buffer[^1] == 'E' && result.Buffer[^2] == 'E')
             {
                 Debug.Log("Received message: " + Encoding.ASCII.GetString(result.Buffer));
-                _lastReceivedTime = DateTime.Now;
+                _lastReceivedTime.Value = DateTime.Now;
                 switch (connection)
                 {
                     case Connection.Disconnected:
