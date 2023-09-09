@@ -9,18 +9,23 @@ namespace RobotController
 {
     public class UDPBroadcaster
     {
-        private readonly UdpClient _udpClient;
-        private bool _isRunning;
-        private readonly List<byte[]> _sendBuffers = new();
+        private readonly byte[] _defaultPingMessage;
 
-        public UDPBroadcaster()
+        private readonly List<byte[]> _sendBuffers = new();
+        private readonly UdpClient _udpClient;
+
+        private bool _isRunning;
+
+        public UDPBroadcaster(byte[] defaultPingMessage)
         {
             _udpClient = new UdpClient();
             _udpClient.EnableBroadcast = true;
+            _defaultPingMessage = defaultPingMessage;
         }
 
-        public void updateSendBuffer(byte[] buffer)
+        public void UpdateSendBuffer(byte[] buffer)
         {
+            if (_sendBuffers.Count >= 2) _sendBuffers.Clear();
             _sendBuffers.Add(buffer);
         }
 
@@ -37,10 +42,12 @@ namespace RobotController
             var remoteEndPoint = new IPEndPoint(IPAddress.Broadcast, remoteListenPort);
             while (!token.IsCancellationRequested && _isRunning)
             {
-                foreach (var sendBuffer in _sendBuffers)
-                    await _udpClient.SendAsync(sendBuffer, sendBuffer.Length, remoteEndPoint);
+                if (_sendBuffers.Count == 0)
+                    await _udpClient.SendAsync(_defaultPingMessage, _defaultPingMessage.Length, remoteEndPoint);
+                for (var i = 0; i < _sendBuffers.Count; i++)
+                    await _udpClient.SendAsync(_sendBuffers[i], _sendBuffers[i].Length, remoteEndPoint);
                 _sendBuffers.Clear();
-                await UniTask.Delay(interval);
+                await UniTask.Delay(interval, cancellationToken: token);
             }
         }
 

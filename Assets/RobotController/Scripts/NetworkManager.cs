@@ -2,7 +2,6 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -19,7 +18,7 @@ namespace RobotController
         public Connection connection = Connection.Disconnected;
         private readonly TimeSpan _broadcastInterval = TimeSpan.FromMilliseconds(5);
         private readonly TimeSpan _connectionTimeout = TimeSpan.FromSeconds(1);
-        private AsyncLocal<DateTime> _lastReceivedTime;
+        private DateTime _lastReceivedTime;
         private IPEndPoint _remoteEndPoint;
         private UDPBroadcaster _udpBroadcaster;
         private UDPListener _udpListener;
@@ -32,12 +31,12 @@ namespace RobotController
         {
             GetLocalEndPoint();
             _udpListener = new UDPListener(localReceivePort);
-            _udpBroadcaster = new UDPBroadcaster();
+            _udpBroadcaster = new UDPBroadcaster(pingMessageBytes);
         }
 
         private void FixedUpdate()
         {
-            if (connection == Connection.Connected && DateTime.Now - _lastReceivedTime.Value > _connectionTimeout)
+            if (connection == Connection.Connected && DateTime.Now - _lastReceivedTime > _connectionTimeout)
             {
                 connection = Connection.Disconnected;
                 OnConnectionChanged?.Invoke(connection, _remoteEndPoint);
@@ -65,7 +64,7 @@ namespace RobotController
 
         public void UpdateSendBuffer(byte[] buffer)
         {
-            _udpBroadcaster.updateSendBuffer(buffer);
+            _udpBroadcaster.UpdateSendBuffer(buffer);
         }
 
         private void OnReceivedCallback(UdpReceiveResult result)
@@ -74,7 +73,7 @@ namespace RobotController
                 result.Buffer[^1] == 'E' && result.Buffer[^2] == 'E')
             {
                 Debug.Log("Received message: " + Encoding.ASCII.GetString(result.Buffer));
-                _lastReceivedTime.Value = DateTime.Now;
+                _lastReceivedTime = DateTime.Now;
                 switch (connection)
                 {
                     case Connection.Disconnected:
